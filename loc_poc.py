@@ -74,6 +74,7 @@ def swap_job(service_user_name_for_reports, old_table, new_table, time_out):
         raise error.with_traceback(sys.exc_info()[2])
     finally:
         lock_unlock_user(db, service_user_name_for_reports, "unlock")
+        db.close()
 
 
 swap_job("report_user", "big_table", "big_table_temp", 60)
