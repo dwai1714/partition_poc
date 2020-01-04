@@ -34,7 +34,7 @@ spark-submit  --packages mysql:mysql-connector-java:8.0.18 <Your_dir>/partition_
 * However the swap of name in MySQL is very fast. I was able to swap a table with 20 MN rows in less than 5 seconds
 
 ## When it will not work
-* This solution may not work if there is no uniformity in the way the users are connected to Database
+* This solution may not work if there is no uniformity in the way the end users are connected to Database
     
 ## TODO List
 * If the POC is good to go wrap it with Airflow. This may give a chance to migrate the other spark jobs to Airflow which is the defacto standard for orchestration
