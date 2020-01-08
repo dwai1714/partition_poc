@@ -15,19 +15,20 @@ def db_connect(user_name_with_all_privilege, password):
 )
     return db
 
-def lock_unlock_user(db, user_name, operation):
+def lock_unlock_user(db, user_names_list, operation):
     cursor = db.cursor()
 
     ## defining the Query
-    query = "ALTER USER {}@localhost ACCOUNT {};"
+    for user in user_names_list:
+        query = "ALTER USER {}@localhost ACCOUNT {};"
+        print(query.format(user, operation))
+        cursor.execute(query.format(user, operation))
 
-    ## getting records from the table
-    cursor.execute(query.format(user_name, operation))
-
-def get_process_id(db, user_name_process):
+def get_process_id(db, user_names_list):
     cursor = db.cursor()
-    query = "select ID from information_schema.processlist where USER = '{}';"
-    cursor.execute(query.format(user_name_process))
+    user_names_string = ','.join(['%s'] * len(user_names_list))
+    query = 'select ID from information_schema.processlist where INFO is NOT NULL and USER in {};'.format(tuple(user_names_list))
+    cursor.execute(query.format(user_names_string))
     records = cursor.fetchall()
     if len(records) > 0:
         return records
@@ -59,15 +60,12 @@ def swap_job(service_user_name_for_reports, old_table, new_table, time_out):
     db = db_connect("super_user", "super")
     try:
         lock_unlock_user(db, service_user_name_for_reports, "lock")
-        records = get_process_id(db, service_user_name_for_reports)
-        if records is not None:
-            print("I am here")
-            sleep(time_out)
-            print("I am after sleep here")
-
-            kill_process(db,records)
-            print("I am after kill here")
-
+        for x in range(2): # Looping just to avoid millisecond locks. It wont happen but still
+            records = get_process_id(db, service_user_name_for_reports)
+            if records is not None:
+                if x ==0:
+                    sleep(time_out)
+                kill_process(db,records)
         rename_table(db,old_table, new_table)
     except Exception as error:
         logging.error(f'error in main error {error} at {datetime.now()}')
@@ -77,4 +75,4 @@ def swap_job(service_user_name_for_reports, old_table, new_table, time_out):
         db.close()
 
 
-swap_job("report_user", "big_table", "big_table_temp", 60)
+swap_job(["report_user", "b_user"], "big_table", "big_table_temp", 60)
